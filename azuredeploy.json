@@ -44,13 +44,11 @@
             "name": "[parameters('hostingPlanName')]",
             "type": "Microsoft.Web/serverfarms",
             "location": "[parameters('siteLocation')]",
-            "sku": {
-                "name": "[parameters('sku')]",
-                "capacity": 1
-            },
             "properties": {
+                "sku": "[parameters('sku')]",
                 "name": "[parameters('hostingPlanName')]",
-                "workerSize": "[parameters('workerSize')]"
+                "workerSize": "[parameters('workerSize')]",
+                "numberOfWorkers": 1
             }
         },
         {
