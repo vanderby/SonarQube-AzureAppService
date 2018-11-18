@@ -35,10 +35,7 @@
           }
     },
     "variables": {
-        "webSiteName": {
-            "type": "string",
-            "defaultValue": "[concat('SonarQubeAppService', uniqueString(resourceGroup().id))]"
-         }
+        "webSiteName": "[concat('SonarQubeAppService', uniqueString(resourceGroup().id))]"
     },
     "resources": [
         {
