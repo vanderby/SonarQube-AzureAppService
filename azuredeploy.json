@@ -53,7 +53,7 @@
         },
         {
             "apiVersion": "2016-08-01",
-            "name": "[variables('siteName')]",
+            "name": "[parameters('siteName')]",
             "type": "Microsoft.Web/sites",
             "location": "[parameters('siteLocation')]",
             "dependsOn": [
