@@ -11,6 +11,10 @@
             "type": "string",
             "defaultValue": "North Central US"
         },
+        "siteName": {
+            "type": "string",
+            "defaultValue": "SonarQubeAppService"
+        },
         "skuName": {
             "defaultValue": "B1",
             "allowedValues": [
@@ -29,13 +33,10 @@
         },
         "repoUrl": {
             "type": "string"
-          },
-          "branch": {
+        },
+        "branch": {
             "type": "string"
-          }
-    },
-    "variables": {
-        "webSiteName": "[concat('SonarQubeAppService', uniqueString(resourceGroup().id))]"
+        }
     },
     "resources": [
         {
@@ -52,17 +53,14 @@
         },
         {
             "apiVersion": "2016-08-01",
-            "name": "[variables('webSiteName')]",
+            "name": "[variables('siteName')]",
             "type": "Microsoft.Web/sites",
             "location": "[parameters('siteLocation')]",
-            "tags": {
-                "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]": "Resource"
-            },
             "dependsOn": [
                 "[resourceId('Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]"
             ],
             "properties": {
-                "name": "[variables('webSiteName')]",
+                "name": "[parameters('siteName')]",
                 "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]",
                 "clientAffinityEnabled": false
             },
@@ -72,16 +70,27 @@
                     "type": "config",
                     "apiVersion": "2016-08-01",
                     "dependsOn": [
-                        "[resourceId('Microsoft.Web/sites', variables('webSiteName'))]"
+                        "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
                     ],
-                    "tags": {
-                        "displayName": "AppSettings"
-                    },
                     "properties": {
                         "alwaysOn": false,
                         "javaVersion": "1.8",
                         "javaContainer": "TOMCAT",
                         "javaContainerVersion": "9.0"
+                    }
+                },
+                {
+                    "apiVersion": "2016-08-01",
+                    "name": "web",
+                    "type": "sourcecontrols",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/Sites', parameters('siteName'))]",
+                        "[concat('Microsoft.Web/Sites/', parameters('siteName'), '/config/web')]"
+                    ],
+                    "properties": {
+                        "RepoUrl": "[parameters('repoUrl')]",
+                        "branch": "[parameters('branch')]",
+                        "IsManualIntegration": true
                     }
                 }
             ]
