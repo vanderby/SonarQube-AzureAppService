@@ -28,7 +28,7 @@
         },
         "webSiteName": {
             "type": "string",
-            "defaultValue": "[concat(SonarQubeAppService, resourceGroup().id)]"
+            "defaultValue": "[concat('SonarQubeAppService', uniqueString(resourceGroup().id))]"
         },
         "repoUrl": {
             "type": "string"
