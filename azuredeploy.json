@@ -15,22 +15,23 @@
             "type": "string",
             "defaultValue": "SonarQubeAppService"
         },
-        "skuName": {
-            "defaultValue": "B1",
+        "sku": {
+            "type": "string",
             "allowedValues": [
-                "B1",
-                "B2",
-                "B3",
-                "S1",
-                "S2",
-                "S3",
-                "P1",
-                "P2",
-                "P3",
-                "P4"
+              "Basic",
+              "Standard"
             ],
-            "type": "string"
-        },
+            "defaultValue": "Basic"
+          },
+          "workerSize": {
+            "type": "string",
+            "allowedValues": [
+              "0",
+              "1",
+              "2"
+            ],
+            "defaultValue": "0"
+          },
         "repoUrl": {
             "type": "string"
         },
@@ -44,11 +45,11 @@
             "name": "[parameters('hostingPlanName')]",
             "type": "Microsoft.Web/serverfarms",
             "location": "[parameters('siteLocation')]",
-            "sku": {
-                "name": "[parameters('skuName')]"
-            },
             "properties": {
-                "name": "[parameters('hostingPlanName')]"
+                "name": "[parameters('hostingPlanName')]",
+                "sku": "[parameters('sku')]",
+                "workerSize": "[parameters('workerSize')]",
+                "numberOfWorkers": 1
             }
         },
         {
