@@ -26,11 +26,11 @@
           "workerSize": {
             "type": "string",
             "allowedValues": [
-              "0",
-              "1",
-              "2"
+              "Small",
+              "Medium",
+              "Large"
             ],
-            "defaultValue": "0"
+            "defaultValue": "Small"
           },
         "repoUrl": {
             "type": "string"
