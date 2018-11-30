@@ -1,4 +1,7 @@
-﻿Write-Output 'Setting Security to TLS 1.2'
+﻿Write-Output 'Copy wwwroot folder'
+xcopy wwwroot ..\wwwroot
+
+Write-Output 'Setting Security to TLS 1.2'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 Write-Output 'Prevent the progress meter from trying to access the console'
 $global:progressPreference = 'SilentlyContinue'
