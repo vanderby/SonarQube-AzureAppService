@@ -1,5 +1,5 @@
 ﻿Write-Output 'Copy wwwroot folder'
-xcopy wwwroot ..\wwwroot
+xcopy wwwroot ..\wwwroot /Y
 
 Write-Output 'Setting Security to TLS 1.2'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -14,9 +14,10 @@ $latestFile = $zipFiles[-1]
 $downloadUri = $downloadSource + $latestFile.href
 
 Write-Output "Downloading '$downloadUri'"
-Invoke-WebRequest -Uri $downloadUri -OutFile $latestFile.href -UseBasicParsing
+$outputFile = "..\wwwroot\$($latestFile.href)"
+Invoke-WebRequest -Uri $downloadUri -OutFile $outputFile -UseBasicParsing
 Write-Output 'Done downloading file'
 
 Write-Output 'Extracting zip'
-Expand-Archive -Path $latestFile.href -DestinationPath .
+Expand-Archive -Path $outputFile -DestinationPath ..\wwwroot
 Write-Output 'Extraction complete'
