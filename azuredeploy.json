@@ -74,7 +74,7 @@
                     ],
                     "properties": {
                         "alwaysOn": false,
-                        "javaVersion": "1.8",
+                        "javaVersion": "11",
                         "javaContainer": "TOMCAT",
                         "javaContainerVersion": "9.0"
                     }
