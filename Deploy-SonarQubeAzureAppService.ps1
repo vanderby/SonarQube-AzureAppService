@@ -1,5 +1,5 @@
 ﻿param(
-    [string]$ApplicationInsightsApiKey = ''
+    [string]$ApplicationInsightsApiKey = $Env:Deployment_Telemetry_Instrumentation_Key
 )
 
 function TrackTimedMetric {
