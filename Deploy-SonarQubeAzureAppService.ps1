@@ -15,14 +15,19 @@ function TrackTimedMetric {
     $stopwatch.Stop()
     if($Client)
     {
+        $properties = New-Object 'System.Collections.Generic.Dictionary[[string],[string]]'
+        $properties.Add("Location", $Env:REGION_NAME)
+        $properties.Add("SKU", $Env:WEBSITE_SKU)
+        $properties.Add("Processor Count", $Env:NUMBER_OF_PROCESSORS)
+        $properties.Add("Always On", $Env:WEBSITE_SCM_ALWAYS_ON_ENABLED) 
         $metrics = New-Object 'System.Collections.Generic.Dictionary[[string],[double]]'
         $metrics.Add('duration (ms)', $stopwatch.ElapsedMilliseconds)
-        $Client.TrackEvent($EventName, $null, $metrics)
+        $Client.TrackEvent($EventName, $properties, $metrics)
     }
 }
 
 Write-Output 'Loading Telemetry Library'
-$telemetryDllName = 'Microsoft.ApplicationInsights.dll'
+$telemetryDllName = 'wwwroot\Microsoft.ApplicationInsights.dll'
 $telemetryDllPath = Join-Path $PSScriptRoot $telemetryDllName -Resolve
 $client = $null
 if((Test-Path $telemetryDllPath) -and $ApplicationInsightsApiKey)
@@ -31,7 +36,6 @@ if((Test-Path $telemetryDllPath) -and $ApplicationInsightsApiKey)
     Add-Type -Path $telemetryDllPath
     $client = New-Object 'Microsoft.ApplicationInsights.TelemetryClient'
     $client.InstrumentationKey=$ApplicationInsightsApiKey
-    $client.TrackTrace('Client Loaded.')
 }
 
 TrackTimedMetric -Client $client -EventName 'Download And Extract Binaries' -ScriptBlock {
