@@ -7,38 +7,48 @@ function log($message) {
     Write-Output "$($dateTime.ToLongTimeString()) $message" 
 }
 
-function TrackMetric {
+function TrackEvent {
     param (
-        [Microsoft.ApplicationInsights.TelemetryClient]$Client,
+        [string]$InstrumentationKey,
         [string]$EventName
     )
 
-    if($Client)
+    log($EventName)
+    if($InstrumentationKey)
     {
-        $properties = New-Object 'System.Collections.Generic.Dictionary[[string],[string]]'
-        $properties.Add("Location", $Env:REGION_NAME)
-        $properties.Add("SKU", $Env:WEBSITE_SKU)
-        $properties.Add("Processor Count", $Env:NUMBER_OF_PROCESSORS)
-        $properties.Add("Always On", $Env:WEBSITE_SCM_ALWAYS_ON_ENABLED)
-        $Client.TrackEvent($EventName, $properties)
+        $uniqueId = ''
+        if($Env:WEBSITE_INSTANCE_ID)
+        {
+            $uniqueId = $Env:WEBSITE_INSTANCE_ID.substring(5,15)
+        }
+
+        $properties = @{
+            "Location" = $Env:REGION_NAME;
+            "SKU" = $Env:WEBSITE_SKU;
+            "Processor Count" = $Env:NUMBER_OF_PROCESSORS;
+            "Always On" = $Env:WEBSITE_SCM_ALWAYS_ON_ENABLED;
+            "UID" = $uniqueId
+        }
+
+        $body = ConvertTo-Json -Depth 5 -InputObject @{
+			name = "Microsoft.ApplicationInsights.Dev.$InstrumentationKey.Event";
+			time = [Datetime]::UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
+			iKey = $InstrumentationKey;
+			data = @{
+				baseType = "EventData";
+				baseData = @{
+					ver = 2;
+					name = $EventName;
+					properties = $properties;
+				}
+			};
+        }
+
+        Invoke-RestMethod -Method POST -Uri "https://dc.services.visualstudio.com/v2/track" -ContentType "application/json" -Body $body | out-null
     }
 }
 
-log('Starting HttpPlatformHandler Script')
-
-log('Loading Telemetry Library')
-$telemetryDllName = 'Microsoft.ApplicationInsights.dll'
-$telemetryDllPath = Join-Path $PSScriptRoot $telemetryDllName -Resolve
-$client = $null
-if((Test-Path $telemetryDllPath) -and $ApplicationInsightsApiKey)
-{
-    log('Telemetry client library found.')
-    Add-Type -Path $telemetryDllPath
-    $client = New-Object 'Microsoft.ApplicationInsights.TelemetryClient'
-    $client.InstrumentationKey=$ApplicationInsightsApiKeys
-}
-
-TrackMetric -Client $client -EventName 'SQ Starting'
+TrackEvent -InstrumentationKey $ApplicationInsightsApiKey -EventName 'Starting HttpPlatformHandler Script'
 
 $port = $env:HTTP_PLATFORM_PORT
 log("HTTP_PLATFORM_PORT is: $port")
