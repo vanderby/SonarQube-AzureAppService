@@ -90,17 +90,7 @@
                         "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
                     ],
                     "properties": {
-                        "Deployment_Telemetry_Instrumentation_Key": "[variables('deploymentTelemetryKey')]"
-                    }
-                },
-                {
-                    "name": "appsettings",
-                    "type": "config",
-                    "apiVersion": "2016-08-01",
-                    "dependsOn": [
-                        "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
-                    ],
-                    "properties": {
+                        "Deployment_Telemetry_Instrumentation_Key": "[variables('deploymentTelemetryKey')]",
                         "wrapper.java.command": "%JAVA_HOME%\\bin\\java"
                     }
                 },
