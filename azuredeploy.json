@@ -90,7 +90,8 @@
                         "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
                     ],
                     "properties": {
-                        "Deployment_Telemetry_Instrumentation_Key": "[variables('deploymentTelemetryKey')]"
+                        "Deployment_Telemetry_Instrumentation_Key": "[variables('deploymentTelemetryKey')]",
+                        "wrapper.java.command": "%JAVA_HOME%\\bin\\java"
                     }
                 },
                 {
