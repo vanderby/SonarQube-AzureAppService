@@ -103,3 +103,5 @@ if(!$startScript) {
 log("File found at: $($startScript[-1].FullName)")
 log('Executing StartSonar.bat')
 & $startScript[-1].FullName
+
+TrackEvent -InstrumentationKey $ApplicationInsightsApiKey -EventName 'Exiting HttpPlatformHandler Script'
