@@ -9,7 +9,7 @@ This project uses the embedded database. It is recommended for production to mov
 Use the ***Deploy to Azure*** button above to deploy out an Azure App Service along with the additional files from this project. SonarQube may take up to 10 minutes to start the first time. This will deploy out a Basic (B1) App Service and have SQ use an in-memory database.
 
 ## Passthrough Application Settings
-You can set SonarQube sonar.properties and wrapper.conf settings based on the Azure application settings. Anything prefixed with sonar.* (for sonar.properties) and wrapper.* (for wrapper.conf) will at runtime be set in their respective files. This enables settings to be defined in the ARM template and set at runtime. An example of this is the Java runtime being set by the "wrapper.java.command" application setting.
+You can set SonarQube sonar.properties settings based on the Azure application settings. Anything prefixed with sonar.* will at runtime be set in sonar.properties file if it matches a property there. This enables settings to be defined in the ARM template and set at runtime.
 
 ## In-Depth Details
 After the ARM template is deployed a deployment script is executed to copy the wwwroot folder from the repository folder to the App Service wwwroot folder. It also finds the most recent release of SonarQube to download and extract into the App Service wwwroot folder.
