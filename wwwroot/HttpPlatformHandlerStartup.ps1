@@ -57,8 +57,12 @@ if(!$propFile) {
     exit
 }
 log("File found at: $($propFile.FullName)")
-log('Updating sonar.properties based on environment/application settings.')
 $configContents = Get-Content -Path $propFile.FullName -Raw
+
+log('Resetting properties.')
+$configContents = $configContents -ireplace '#?sonar.', '#sonar.'
+
+log('Updating sonar.properties based on environment/application settings.')
 Get-ChildItem Env: | Where-Object -Property Name -like -Value 'sonar.*' | ForEach-Object {
     $propertyName = $_.Name
     $propertyValue = $_.Value
