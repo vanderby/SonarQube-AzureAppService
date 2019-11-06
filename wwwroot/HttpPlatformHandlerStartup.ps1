@@ -57,23 +57,23 @@ if(!$propFile) {
     exit
 }
 log("File found at: $($propFile.FullName)")
-$configContents = Get-Content -Path $propFile.FullName -Raw
+$configContents = Get-Content -Path $propFile.FullName
 
 log('Resetting properties.')
-$configContents = $configContents -ireplace '#?sonar.', '#sonar.'
+$configContents = $configContents -ireplace '^#?sonar\.', '#sonar.'
 
 log('Updating sonar.properties based on environment/application settings.')
 Get-ChildItem Env: | Where-Object -Property Name -like -Value 'sonar.*' | ForEach-Object {
     $propertyName = $_.Name
     $propertyValue = $_.Value
     log("Setting $propertyName to $propertyValue")
-    $configContents = $configContents -ireplace "#?$propertyName=.*", "$propertyName=$propertyValue"
+    $configContents = $configContents -ireplace "^#?$propertyName=.*", "$propertyName=$propertyValue"
 }
 
 $port = $env:HTTP_PLATFORM_PORT
 log("HTTP_PLATFORM_PORT is: $port")
 log("Updating sonar.web.port to $port")
-$configContents = $configContents -ireplace '#?sonar.web.port=.*', "sonar.web.port=$port"
+$configContents = $configContents -ireplace '^#?sonar\.web\.port=.*', "sonar.web.port=$port"
 
 log('Saving updated sonar.properties contents')
 $configContents | Set-Content -Path $propFile.FullName
@@ -88,7 +88,7 @@ if(!$wrapperConfig) {
 log("File found at: $($wrapperConfig.FullName)")
 log("Writing to wrapper.conf file")	log('Updating wrapper.conf based on environment/application settings.')
 $wrapperConfigContents = Get-Content -Path $wrapperConfig.FullName -Raw
-$wrapperConfigContents -ireplace 'wrapper.java.command=java', 'wrapper.java.command=%JAVA_HOME%\bin\java' | Set-Content -Path $wrapperConfig.FullName
+$wrapperConfigContents -ireplace 'wrapper\.java\.command=.*', 'wrapper.java.command=%JAVA_HOME%\bin\java' | Set-Content -Path $wrapperConfig.FullName
 
 log('Searching for StartSonar.bat')
 $startScript = Get-ChildItem 'StartSonar.bat' -Recurse
