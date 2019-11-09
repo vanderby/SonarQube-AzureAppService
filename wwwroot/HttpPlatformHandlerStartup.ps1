@@ -90,6 +90,21 @@ log("Writing to wrapper.conf file")	log('Updating wrapper.conf based on environm
 $wrapperConfigContents = Get-Content -Path $wrapperConfig.FullName -Raw
 $wrapperConfigContents -ireplace 'wrapper\.java\.command=.*', 'wrapper.java.command=%JAVA_HOME%\bin\java' | Set-Content -Path $wrapperConfig.FullName -NoNewLine
 
+log('Searching for duplicate plugins.')
+$plugins = Get-ChildItem '.\sonarqube-*\extensions\plugins\*' -Filter '*.jar'
+$pluginBaseName = $plugins | ForEach-Object { $_.Name.substring(0, $_.Name.LastIndexOf('-')) }
+$uniquePlugins = $pluginBaseName | Select-Object -Unique
+$duplicates = Compare-Object -ReferenceObject $uniquePlugins -DifferenceObject $pluginBaseName
+if($duplicates)
+{
+    log("Duplicates plugins found for: $($duplicates.InputObject)")a
+    foreach($duplicate in $duplicates) { 
+        $oldestFile = $plugins | Where-Object { $_.Name -imatch $duplicate.InputObject } | Sort-Object -Property 'LastWriteTime' | Select-Object -First 1
+        log("Deleting $oldestFile")
+        $oldestFile | Remove-Item
+    }
+}
+
 log('Searching for StartSonar.bat')
 $startScript = Get-ChildItem 'StartSonar.bat' -Recurse
 if(!$startScript) {
