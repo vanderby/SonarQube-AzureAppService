@@ -19,10 +19,13 @@ The runtime execution is made possible by the [HttpPlatformHandler](https://docs
  In order to make this work the [HttpPlatformHandlerStartup.ps1](https://github.com/vanderby/SonarQube-AzureAppService/blob/master/HttpPlatformHandlerStartup.ps1) script is executed by the HttpPlatformHandler. The script searches for the sonar.properties file and writes the port defined in the HTTP\_PLATFORM\_PORT environment variable to the properties file. It also writes the java.exe location to the wrapper.conf file. Finally it executes one of the StartSonar.bat file to start SonarQube.
 
 ## Azure SQL
-If you wish to switch SQ to use an Azure SQL database deploy out the database with a case-sensative collation (e.g.  SQL_Latin1_General_CP1_CS_AS) and update the sonar.properties file with entries similar to:
-- sonar.jdbc.url=jdbc:sqlserver://AzureSQLDatabaseServer.database.windows.net:1433;database=DatabaseName;encrypt=true;  
-- sonar.jdbc.username=SqlUserLogin  
-- sonar.jdbc.password=SqlUserLoginPassword  
+If you wish to switch SQ to use an Azure SQL database deploy out the database with a case-sensative collation (e.g.  SQL_Latin1_General_CP1_CS_AS) and update the Web App app settings with entries similar to: 
+
+| Name | Value |
+| ---- | ----- |
+| sonar.jdbc.url | jdbc:sqlserver://AzureSQLDatabaseServer.database.windows.net:1433;database=DatabaseName;encrypt=true; |
+| sonar.jdbc.username | SqlUserLogin |
+| sonar.jdbc.password | SqlUserLoginPassword |
 
 ## Alternative Hosting Methods
 Some alternative hosting methods are below with the relevant links.
