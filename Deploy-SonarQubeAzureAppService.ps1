@@ -85,8 +85,8 @@ TrackTimedEvent -InstrumentationKey $ApplicationInsightsApiKey -EventName 'Downl
 
         # We sort by a custom expression so that we sort based on a version and not as a string. This results in the proper order given values such as 7.9.zip and 7.9.1.zip.
         #   In the expression we use RegEx to find the "Version.zip" string, then split and grab the first to get just the "Version" and finally cast that to a version object
-        $sortedZipFiles = $zipFiles | Sort-Object -Property @{ Expression = { [Version]([RegEx]::Match($_.href, '\d+.\d+.?(\d+)?.?(\d+)?.zip').Value -Split ".zip")[0] } }
-        $latestFile = $sortedZipFiles[-1]
+        # $sortedZipFiles = $zipFiles | Sort-Object -Property @{ Expression = { [Version]([RegEx]::Match($_.href, '\d+.\d+.?(\d+)?.?(\d+)?.zip').Value -Split ".zip")[0] } }
+        $latestFile = $zipFiles[-1]
         $downloadUri = "$downloadSource/$($latestFile.href)"
         $fileName = $latestFile.href
     } else {
