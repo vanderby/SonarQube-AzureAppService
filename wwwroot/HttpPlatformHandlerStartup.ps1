@@ -4,7 +4,7 @@
 
 function log($message) {
     [DateTime]$dateTime = [System.DateTime]::Now
-    Write-Output "$($dateTime.ToLongTimeString()) $message" 
+    Write-Output "$($dateTime.ToLongTimeString()) $message"
 }
 
 function TrackEvent {
@@ -48,6 +48,43 @@ function TrackEvent {
     }
 }
 
+function Write-File {
+    param(
+        [string]$FileContents,
+        [string]$FilePath
+    )
+
+    if (-not (Test-Path -Path $FilePath)) {
+        throw "File not found at $FilePath"
+    }
+
+    if (-not $fileContents) {
+        throw "Trying to write empty data to $FilePath"
+    }
+
+    # Check to make sure the file isn't locked by another process
+    try {
+        $fileStream = [System.IO.File]::Open($FilePath,'Open','Write')
+        $fileStream.Close()
+    } catch {
+        throw "File is locked at $FilePath"
+    } finally {
+        if($fileStream) {
+            $fileStream.Dispose()
+        }
+    }
+
+    # Check if the file contents have changed
+    $currentContent = Get-Content -Path $FilePath -Raw
+    if ($currentContent -eq $FileContents) {
+        log("Contents have not changed. Not writing to $FilePath")
+        return
+    }
+
+    log("Saving updated content to $FilePath")
+    $FileContents | Set-Content -Path $FilePath -NoNewLine
+}
+
 TrackEvent -InstrumentationKey $ApplicationInsightsApiKey -EventName 'Starting HttpPlatformHandler Script'
 
 log('Searching for sonar.properties file')
@@ -74,9 +111,7 @@ $port = $env:HTTP_PLATFORM_PORT
 log("HTTP_PLATFORM_PORT is: $port")
 log("Updating sonar.web.port to $port")
 $configContents = $configContents -ireplace '^#?sonar\.web\.port=.*', "sonar.web.port=$port"
-
-log('Saving updated sonar.properties contents')
-$configContents | Out-String | Set-Content -Path $propFile.FullName -NoNewLine
+Write-File -FileContents ($configContents | Out-String) -FilePath $propFile.FullName
 
 log('Searching for wrapper.conf file')
 $wrapperConfig = Get-ChildItem 'wrapper.conf' -Recurse
@@ -86,9 +121,9 @@ if(!$wrapperConfig) {
 }
 
 log("File found at: $($wrapperConfig.FullName)")
-log("Writing to wrapper.conf file")	log('Updating wrapper.conf based on environment/application settings.')
 $wrapperConfigContents = Get-Content -Path $wrapperConfig.FullName -Raw
-$wrapperConfigContents -ireplace 'wrapper\.java\.command=.*', 'wrapper.java.command=%JAVA_HOME%\bin\java' | Set-Content -Path $wrapperConfig.FullName -NoNewLine
+$fileContents = $wrapperConfigContents -ireplace 'wrapper\.java\.command=.*', 'wrapper.java.command=%JAVA_HOME%\bin\java'
+Write-File -FileContents $fileContents -FilePath $wrapperConfig.FullName
 
 log('Searching for duplicate plugins.')
 $plugins = Get-ChildItem '.\sonarqube-*\extensions\plugins\*' -Filter '*.jar'
