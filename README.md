@@ -33,6 +33,7 @@ If you wish to switch SQ to use an Azure SQL database deploy out the database wi
 | sonar.jdbc.url | jdbc:sqlserver://AzureSQLDatabaseServer.database.windows.net:1433;database=DatabaseName;encrypt=true; |
 | sonar.jdbc.username | SqlUserLogin |
 | sonar.jdbc.password | SqlUserLoginPassword |
+
 Note: All configurations in the sonar.properties file are commented out by the powershell script [HttpPlatformHandlerStartup](wwwroot/HttpPlatformHandlerStartup.ps1) on startup. To change the sonar properties add the environment variables to the application settings on azure on the configuration page(e.g. Name:sonar.jdbc.password). 
 
 ## Alternative Hosting Methods
