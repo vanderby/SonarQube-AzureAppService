@@ -18,6 +18,8 @@ Use the ***Deploy to Azure*** button above to deploy out an Azure App Service al
 ## Passthrough Application Settings
 You can set SonarQube sonar.properties settings based on the Azure application settings. Anything prefixed with sonar.* will at runtime be set in sonar.properties file if it matches a property there. This enables settings to be defined in the ARM template and set at runtime.
 
+> Note: All entries in the sonar.properties file are commented out by the [HttpPlatformHandlerStartup](wwwroot/HttpPlatformHandlerStartup.ps1) script on startup. To change the Sonar properties add the application settings entry in the configuration blade (e.g. Name = sonar.jdbc.password; Value = XXXXX).
+
 ## In-Depth Details
 After the ARM template is deployed a deployment script is executed to copy the wwwroot folder from the repository folder to the App Service wwwroot folder. It also finds the most recent release of SonarQube to download and extract into the App Service wwwroot folder.
 
@@ -33,8 +35,6 @@ If you wish to switch SQ to use an Azure SQL database deploy out the database wi
 | sonar.jdbc.url | jdbc:sqlserver://AzureSQLDatabaseServer.database.windows.net:1433;database=DatabaseName;encrypt=true; |
 | sonar.jdbc.username | SqlUserLogin |
 | sonar.jdbc.password | SqlUserLoginPassword |
-
-Note: All configurations in the sonar.properties file are commented out by the powershell script [HttpPlatformHandlerStartup](wwwroot/HttpPlatformHandlerStartup.ps1) on startup. To change the sonar properties add the environment variables to the application settings on azure on the configuration page(e.g. Name:sonar.jdbc.password). 
 
 ## Alternative Hosting Methods
 Some alternative hosting methods are below with the relevant links.
