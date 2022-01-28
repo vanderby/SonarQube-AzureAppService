@@ -50,7 +50,7 @@ function TrackEvent {
 
 TrackEvent -InstrumentationKey $ApplicationInsightsApiKey -EventName 'Starting HttpPlatformHandler Script'
 
-log('Searching for sonar.properties file')
+#log('Searching for sonar.properties file')
 $propFile = Get-ChildItem 'sonar.properties' -Recurse
 if(!$propFile) {
     log('Could not find sonar.properties')
