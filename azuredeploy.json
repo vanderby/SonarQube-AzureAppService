@@ -53,7 +53,7 @@
         },
         "SonarQube Version": {
             "type": "string",
-            "defaultValue": "Latest",
+            "defaultValue": "9.3.0.51899",
             "metadata": {
                 "description": "Specific version of SQ to download e.g. 7.9.1 or 8.0. Leave blank or set to 'Latest' for most recent version."
             }
