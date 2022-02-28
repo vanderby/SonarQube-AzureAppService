@@ -64,21 +64,6 @@ TrackTimedEvent -InstrumentationKey $ApplicationInsightsApiKey -EventName 'Downl
     Write-Output 'Prevent the progress meter from trying to access the console'
     $global:progressPreference = 'SilentlyContinue'
     
-    if(!$Edition) {
-        $Edition = 'Community'
-    }
-
-    Write-Output "Getting a list of downloads for $Edition edition."
-    $downloadFolder = 'Distribution/sonarqube' # Community Edition
-    switch($Edition) {
-        'Developer' { $downloadFolder = 'CommercialDistribution/sonarqube-developer' }
-        'Enterprise' { $downloadFolder = 'CommercialDistribution/sonarqube-enterprise' }
-        'Data Center' { $downloadFolder = 'CommercialDistribution/sonarqube-datacenter' }
-    }
-
-    $downloadSource = "https://binaries.sonarsource.com/$downloadFolder"
-    $downloadUri = ''
-    $fileName = ''
     if(!$Version -or ($Version -ieq 'Latest')) {
         # binaries.sonarsource.com moved to S3 and is not easily searchable anymore. Getting the latest version from GitHub releases.
         $releasesFromApi = (Invoke-WebRequest -Uri 'https://api.github.com/repos/SonarSource/sonarqube/releases' -UseBasicParsing).Content
@@ -87,15 +72,29 @@ TrackTimedEvent -InstrumentationKey $ApplicationInsightsApiKey -EventName 'Downl
         Write-Output "Found the latest release to be $Version"
     }
 
-    $fileNamePart = 'sonarqube' # Community Edition
-    switch($Edition) {
-        'Developer' { $fileNamePart = 'sonarqube-developer' }
-        'Enterprise' { $fileNamePart = 'sonarqube-enterprise' }
-        'Data Center' { $fileNamePart = 'sonarqube-datacenter' }
+    if(!$Edition) {
+        $Edition = 'Community'
     }
 
-    $fileName = "$fileNamePart-$Version.zip"
-    $downloadUri = "$downloadSource/$fileName"
+    $downloadFolder = 'Distribution/sonarqube' # Community Edition
+    $fileNamePrefix = 'sonarqube' # Community Edition
+    switch($Edition) {
+        'Developer' { 
+            $downloadFolder = 'CommercialDistribution/sonarqube-developer'
+            $fileNamePrefix = 'sonarqube-developer'
+        }
+        'Enterprise' { 
+            $downloadFolder = 'CommercialDistribution/sonarqube-enterprise'
+            $fileNamePrefix = 'sonarqube-enterprise'
+        }
+        'Data Center' { 
+            $downloadFolder = 'CommercialDistribution/sonarqube-datacenter'
+            $fileNamePrefix = 'sonarqube-datacenter'
+        }
+    }
+
+    $fileName = "$fileNamePrefix-$Version.zip"
+    $downloadUri = "https://binaries.sonarsource.com/$downloadFolder/$fileName"
 
     if(!$downloadUri -or !$fileName) {
         throw 'Could not get download uri or filename.'
