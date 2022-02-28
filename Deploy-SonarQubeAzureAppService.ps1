@@ -64,42 +64,37 @@ TrackTimedEvent -InstrumentationKey $ApplicationInsightsApiKey -EventName 'Downl
     Write-Output 'Prevent the progress meter from trying to access the console'
     $global:progressPreference = 'SilentlyContinue'
     
+    if(!$Version -or ($Version -ieq 'Latest')) {
+        # binaries.sonarsource.com moved to S3 and is not easily searchable anymore. Getting the latest version from GitHub releases.
+        $releasesFromApi = (Invoke-WebRequest -Uri 'https://api.github.com/repos/SonarSource/sonarqube/releases' -UseBasicParsing).Content
+        $releasesPS = $releasesFromApi | ConvertFrom-Json
+        $Version = $releasesPS.Name | Sort-Object -Descending | Select-Object -First 1
+        Write-Output "Found the latest release to be $Version"
+    }
+
     if(!$Edition) {
         $Edition = 'Community'
     }
 
-    Write-Output "Getting a list of downloads for $Edition edition."
     $downloadFolder = 'Distribution/sonarqube' # Community Edition
+    $fileNamePrefix = 'sonarqube' # Community Edition
     switch($Edition) {
-        'Developer' { $downloadFolder = 'CommercialDistribution/sonarqube-developer' }
-        'Enterprise' { $downloadFolder = 'CommercialDistribution/sonarqube-enterprise' }
-        'Data Center' { $downloadFolder = 'CommercialDistribution/sonarqube-datacenter' }
-    }
-
-    $downloadSource = "https://binaries.sonarsource.com/$downloadFolder"
-    $downloadUri = ''
-    $fileName = ''
-    if(!$Version -or ($Version -ieq 'Latest')) {
-        $allDownloads = Invoke-WebRequest -Uri $downloadSource -UseBasicParsing
-        $zipFiles = $allDownloads[0].Links | Where-Object { $_.href.EndsWith('.zip') -and !($_.href.contains('alpha') -or $_.href.contains('RC')) }
-
-        # We sort by a custom expression so that we sort based on a version and not as a string. This results in the proper order given values such as 7.9.zip and 7.9.1.zip.
-        #   In the expression we use RegEx to find the "Version.zip" string, then split and grab the first to get just the "Version" and finally cast that to a version object
-        $sortedZipFiles = $zipFiles | Sort-Object -Property @{ Expression = { [Version]([RegEx]::Match($_.href, '\d+.\d+.?(\d+)?.?(\d+)?.zip').Value -Split ".zip")[0] } }
-        $latestFile = $sortedZipFiles[-1]
-        $downloadUri = "$downloadSource/$($latestFile.href)"
-        $fileName = $latestFile.href
-    } else {
-        $fileNamePart = 'sonarqube' # Community Edition
-        switch($Edition) {
-            'Developer' { $fileNamePart = 'sonarqube-developer' }
-            'Enterprise' { $fileNamePart = 'sonarqube-enterprise' }
-            'Data Center' { $fileNamePart = 'sonarqube-datacenter' }
+        'Developer' { 
+            $downloadFolder = 'CommercialDistribution/sonarqube-developer'
+            $fileNamePrefix = 'sonarqube-developer'
         }
-
-        $fileName = "$fileNamePart-$Version.zip"
-        $downloadUri = "$downloadSource/$fileName"
+        'Enterprise' { 
+            $downloadFolder = 'CommercialDistribution/sonarqube-enterprise'
+            $fileNamePrefix = 'sonarqube-enterprise'
+        }
+        'Data Center' { 
+            $downloadFolder = 'CommercialDistribution/sonarqube-datacenter'
+            $fileNamePrefix = 'sonarqube-datacenter'
+        }
     }
+
+    $fileName = "$fileNamePrefix-$Version.zip"
+    $downloadUri = "https://binaries.sonarsource.com/$downloadFolder/$fileName"
 
     if(!$downloadUri -or !$fileName) {
         throw 'Could not get download uri or filename.'
