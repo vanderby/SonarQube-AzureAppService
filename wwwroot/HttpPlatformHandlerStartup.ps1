@@ -66,7 +66,7 @@ log('Updating sonar.properties based on environment/application settings.')
 Get-ChildItem Env: | Where-Object -Property Name -like -Value 'sonar.*' | ForEach-Object {
     $propertyName = $_.Name
     $propertyValue = $_.Value
-    log("Setting $propertyName to $propertyValue")
+    log("Setting $propertyName to ***VALUE HIDDEN***")
     $configContents = $configContents -ireplace "^#?$propertyName=.*", "$propertyName=$propertyValue"
 }
 
