@@ -78,17 +78,26 @@ $configContents = $configContents -ireplace '^#?sonar\.web\.port=.*', "sonar.web
 log('Saving updated sonar.properties contents')
 $configContents | Out-String | Set-Content -Path $propFile.FullName -NoNewLine
 
-log('Searching for wrapper.conf file')
-$wrapperConfig = Get-ChildItem 'wrapper.conf' -Recurse
-if(!$wrapperConfig) {
-    log("Could not find wrapper.conf")
-    exit
+$sqver = $propFile.FullName.split("\")[4].split("-")[1]
+log("SQ version: $sqver")
+if ($sqver -ge 9.6) {
+    log("SQ ver >= 9.6, use env var not wrapper.conf")
+    $Env:SONAR_JAVA_PATH = "$Env:JAVA_HOME\bin\java.exe"
+    log("Set Java exe path env var (SONAR_JAVA_PATH) to: $Env:SONAR_JAVA_PATH")
+} else {
+    log('SQ ver < 9.6, use wrapper.conf')
+    log('Searching for wrapper.conf file')
+    $wrapperConfig = Get-ChildItem 'wrapper.conf' -Recurse
+    if(!$wrapperConfig) {
+        log("Could not find wrapper.conf")
+        exit
+    } else {
+        log("File found at: $($wrapperConfig.FullName)")
+        log('Updating wrapper.conf based on environment/application settings.')
+        $wrapperConfigContents = Get-Content -Path $wrapperConfig.FullName -Raw
+        $wrapperConfigContents -ireplace 'wrapper\.java\.command=.*', 'wrapper.java.command=%JAVA_HOME%\bin\java' | Set-Content -Path $wrapperConfig.FullName -NoNewLine
+    }
 }
-
-log("File found at: $($wrapperConfig.FullName)")
-log("Writing to wrapper.conf file")	log('Updating wrapper.conf based on environment/application settings.')
-$wrapperConfigContents = Get-Content -Path $wrapperConfig.FullName -Raw
-$wrapperConfigContents -ireplace 'wrapper\.java\.command=.*', 'wrapper.java.command=%JAVA_HOME%\bin\java' | Set-Content -Path $wrapperConfig.FullName -NoNewLine
 
 log('Searching for duplicate plugins.')
 $plugins = Get-ChildItem '.\sonarqube-*\extensions\plugins\*' -Filter '*.jar'
