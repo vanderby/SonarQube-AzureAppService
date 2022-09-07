@@ -43,7 +43,7 @@ Some alternative hosting methods are below with the relevant links.
 <https://blogs.msdn.microsoft.com/visualstudioalmrangers/2016/10/06/easily-deploy-sonarqube-server-in-azure/>
 
 **Azure App Service with a Linux Container**  
-<https://azure.microsoft.com/en-us/resources/templates/101-webapp-linux-sonarqube-mysql/>
+<https://azure.microsoft.com/en-us/resources/templates/webapp-linux-sonarqube-mysql/>
 
 **Docker Image**  
 <https://hub.docker.com/_/sonarqube/>
