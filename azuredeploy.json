@@ -1,5 +1,5 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "hostingPlanName": {
@@ -61,6 +61,9 @@
                 "description": "Specific version of SQ to download e.g. 7.9.1 or 8.0. Leave blank or set to 'Latest' for most recent version."
             }
         }
+    },
+    "variables": {
+        "deploymentTelemetryKey": "e15aa4db-a1cc-4622-844f-e7dd01596983"
     },
     "resources": [
         {
@@ -130,6 +133,7 @@
                     ],
                     "properties": {
                         "APPINSIGHTS_INSTRUMENTATIONKEY": "[reference(concat('microsoft.insights/components/', parameters('siteName'))).InstrumentationKey]",
+                        "Deployment_Telemetry_Instrumentation_Key": "[variables('deploymentTelemetryKey')]",
                         "SonarQubeEdition": "[parameters('SonarQube Edition')]",
                         "SonarQubeVersion": "[parameters('SonarQube Version')]"
                     }

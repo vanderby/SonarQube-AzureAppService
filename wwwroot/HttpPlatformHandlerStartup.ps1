@@ -1,5 +1,5 @@
 ﻿param(
-    [string]$ApplicationInsightsApiKey = $Env:APPINSIGHTS_INSTRUMENTATIONKEY
+    [string]$ApplicationInsightsApiKey = $Env:Deployment_Telemetry_Instrumentation_Key
 )
 
 function log($message) {
