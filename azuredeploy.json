@@ -1,32 +1,3 @@
-Skip to content
-Search or jump to…
-Pull requests
-Issues
-Marketplace
-Explore
- 
-@chiticariu 
-vanderby
-/
-SonarQube-AzureAppService
-Public
-Code
-Issues
-2
-Pull requests
-1
-Actions
-Security
-Insights
-SonarQube-AzureAppService/azuredeploy.json
-@akuryan
-akuryan Added more possible sizes to SQ hosting sizes (#68)
-Latest commit edb388d on Aug 5
- History
- 2 contributors
-@vanderby@akuryan
-139 lines (139 sloc)  4.72 KB
-
 {
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
@@ -166,18 +137,3 @@ Latest commit edb388d on Aug 5
         }
     ]
 }
-Footer
-© 2022 GitHub, Inc.
-Footer navigation
-Terms
-Privacy
-Security
-Status
-Docs
-Contact GitHub
-Pricing
-API
-Training
-Blog
-About
-You have unread notifications
