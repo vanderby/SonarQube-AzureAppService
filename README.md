@@ -35,6 +35,64 @@ If you wish to switch SQ to use an Azure SQL database deploy out the database wi
 | sonar.jdbc.username | SqlUserLogin |
 | sonar.jdbc.password | SqlUserLoginPassword |
 
+## Updating instructions
+
+1. Set application setting `SonarQubeOldVersion` to currently deployed version
+1. Set application setting `SonarQubeVersion` to new version to be deployed
+1. Stop web app
+1. Download new zip archive: 
+`
+    $Edition = $Env:SonarQubeEdition
+    $Version = $Env:SonarQubeVersion
+    $OldVersion = $Env:SonarQubeOldVersion
+    if(!$Version -or ($Version -ieq 'Latest')) {
+        # binaries.sonarsource.com moved to S3 and is not easily searchable anymore. Getting the latest version from GitHub releases.
+        $releasesFromApi = (Invoke-WebRequest -Uri 'https://api.github.com/repos/SonarSource/sonarqube/releases' -UseBasicParsing).Content
+        $releasesPS = $releasesFromApi | ConvertFrom-Json
+        $Version = $releasesPS.Name | Sort-Object -Descending | Select-Object -First 1
+        Write-Output "Found the latest release to be $Version"
+    }
+
+    if(!$Edition) {
+        $Edition = 'Community'
+    }
+
+    $downloadFolder = 'Distribution/sonarqube' # Community Edition
+    $fileNamePrefix = 'sonarqube' # Community Edition
+    switch($Edition) {
+        'Developer' { 
+            $downloadFolder = 'CommercialDistribution/sonarqube-developer'
+            $fileNamePrefix = 'sonarqube-developer'
+        }
+        'Enterprise' { 
+            $downloadFolder = 'CommercialDistribution/sonarqube-enterprise'
+            $fileNamePrefix = 'sonarqube-enterprise'
+        }
+        'Data Center' { 
+            $downloadFolder = 'CommercialDistribution/sonarqube-datacenter'
+            $fileNamePrefix = 'sonarqube-datacenter'
+        }
+    }
+
+    $fileName = "$fileNamePrefix-$Version.zip"
+    $downloadUri = "https://binaries.sonarsource.com/$downloadFolder/$fileName"
+    $wwwrootPath = "$env:Home\site\wwwroot"
+    $outputFile = "$wwwrootPath\$fileName"
+    Invoke-WebRequest -Uri $downloadUri -OutFile $outputFile -UseBasicParsing
+    Expand-Archive -Path $outputFile -DestinationPath $wwwrootPath -Force
+`
+1. Copy plugins from old installation to new one
+`
+$oldVersion = $env:SonarQubeOldVersion; 
+$newVersion = $env:SonarQubeVersion; 
+cp C:\home\site\wwwroot\sonarqube-$oldVersion\extensions\plugins\*.jar C:\home\site\wwwroot\sonarqube-$newVersion\extensions\plugins\ -Force;
+`
+1. Remove old sonarqube folder (`$oldVersion = $env:SonarQubeOldVersion; rm C:\home\site\wwwroot\sonarqube-$oldVersion\ -Force`)
+1. Start web app
+
+In case something goes wrong - you could always restore from backup.
+For additional safety - create staging slot with copy of current application before proceeding with actions. If you are using other than Community edition - than your key is calculated basing on database connection string - so, you could not use another database for updating :(
+
 ## Alternative Hosting Methods
 Some alternative hosting methods are below with the relevant links.
 
