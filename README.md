@@ -44,7 +44,7 @@ If you wish to switch SQ to use an Azure SQL database deploy out the database wi
 1. Set application setting `SonarQubeVersion` to new version to be deployed
 1. Stop web app
 1. Download new zip archive: 
-`
+```
     $Edition = $Env:SonarQubeEdition
     $Version = $Env:SonarQubeVersion
     $OldVersion = $Env:SonarQubeOldVersion
@@ -83,13 +83,13 @@ If you wish to switch SQ to use an Azure SQL database deploy out the database wi
     $outputFile = "$wwwrootPath\$fileName"
     Invoke-WebRequest -Uri $downloadUri -OutFile $outputFile -UseBasicParsing
     Expand-Archive -Path $outputFile -DestinationPath $wwwrootPath -Force
-`
+```
 1. Copy plugins from old installation to new one
-`
+```
 $oldVersion = $env:SonarQubeOldVersion; 
 $newVersion = $env:SonarQubeVersion; 
 cp C:\home\site\wwwroot\sonarqube-$oldVersion\extensions\plugins\*.jar C:\home\site\wwwroot\sonarqube-$newVersion\extensions\plugins\ -Force;
-`
+```
 1. Remove old sonarqube folder (`$oldVersion = $env:SonarQubeOldVersion; rm C:\home\site\wwwroot\sonarqube-$oldVersion\ -Force`)
 1. Start web app
 
