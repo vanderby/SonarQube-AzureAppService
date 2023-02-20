@@ -43,7 +43,7 @@ If you wish to switch SQ to use an Azure SQL database deploy out the database wi
 1. Set application setting `SonarQubeOldVersion` to currently deployed version
 1. Set application setting `SonarQubeVersion` to new version to be deployed
 1. Stop web app
-1. Download new zip archive: 
+1. Download new zip archive by executing following scripts at Kudu (in most cases it is https://YOUR-WEB-APP-NAME.scm.azurewebsites.net/DebugConsole/?shell=powershell): 
 ```
     $Edition = $Env:SonarQubeEdition
     $Version = $Env:SonarQubeVersion
