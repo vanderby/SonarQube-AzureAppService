@@ -3,17 +3,17 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "hostingPlanName": {
-      "defaultValue": "SonarQubeAppServicePlan",
+      "type": "string",
       "minLength": 1,
-      "type": "String"
+      "defaultValue": "SonarQubeAppServicePlan"
     },
     "siteLocation": {
-      "defaultValue": "North Central US",
-      "type": "String"
+      "type": "string",
+      "defaultValue": "North Central US"
     },
     "siteName": {
-      "defaultValue": "SonarQubeAppService",
-      "type": "String"
+      "type": "string",
+      "defaultValue": "SonarQubeAppService"
     },
     "skuName": {
       "defaultValue": "B1",
@@ -34,29 +34,29 @@
         "P2",
         "P3"
       ],
-      "type": "String"
+      "type": "string"
     },
     "repoUrl": {
       "defaultValue": "https://github.com/vanderby/SonarQube-AzureAppService",
-      "type": "String"
+      "type": "string"
     },
     "branch": {
       "defaultValue": "master",
-      "type": "String"
+      "type": "string"
     },
     "SonarQube Edition": {
+      "type": "string",
       "defaultValue": "Community",
       "allowedValues": [
         "Community",
         "Developer",
         "Enterprise",
         "Data Center"
-      ],
-      "type": "String"
+      ]
     },
     "SonarQube Version": {
+      "type": "string",
       "defaultValue": "Latest",
-      "type": "String",
       "metadata": {
         "description": "Specific version of SQ to download e.g. 7.9.1 or 8.0. Leave blank or set to 'Latest' for most recent version."
       }
@@ -67,9 +67,9 @@
   },
   "resources": [
     {
-      "type": "Microsoft.Web/serverfarms",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2016-09-01",
       "name": "[parameters('hostingPlanName')]",
+      "type": "Microsoft.Web/serverfarms",
       "location": "[parameters('siteLocation')]",
       "sku": {
         "name": "[parameters('skuName')]"
@@ -79,9 +79,9 @@
       }
     },
     {
-      "type": "Microsoft.Web/sites",
       "apiVersion": "2022-09-01",
       "name": "[parameters('siteName')]",
+      "type": "Microsoft.Web/sites",
       "location": "[parameters('siteLocation')]",
       "dependsOn": [
         "[resourceId('Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]"
@@ -93,9 +93,9 @@
       },
       "resources": [
         {
+          "name": "web",
           "type": "config",
           "apiVersion": "2022-09-01",
-          "name": "web",
           "dependsOn": [
             "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
           ],
@@ -107,9 +107,9 @@
           }
         },
         {
+          "name": "appsettings",
           "type": "config",
           "apiVersion": "2022-09-01",
-          "name": "appsettings",
           "dependsOn": [
             "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
           ],
@@ -120,9 +120,9 @@
           }
         },
         {
-          "type": "sourcecontrols",
           "apiVersion": "2022-09-01",
           "name": "web",
+          "type": "sourcecontrols",
           "dependsOn": [
             "[resourceId('Microsoft.Web/Sites', parameters('siteName'))]",
             "[concat('Microsoft.Web/Sites/', parameters('siteName'), '/config/web')]"
