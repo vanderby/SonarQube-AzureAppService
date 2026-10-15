@@ -12,7 +12,7 @@ This project uses the embedded database. It is recommended for production to mov
 [Deploy to Azure China Cloud](https://portal.azure.cn/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fvanderby%2FSonarQube-AzureAppService%2Fmaster%2Fazuredeploy.json)
 
 ## Getting Started
-Use the ***Deploy to Azure*** button above to deploy out an Azure App Service along with the additional files from this project. SonarQube may take up to 10 minutes to start the first time. This will deploy out a Basic (B2) App Service by default, configured with Java 21 and a 512 MB Elasticsearch heap, and have SQ use an in-memory database. B2 or higher is recommended for SonarQube 26.x; B1 may not have enough memory.
+Use the ***Deploy to Azure*** button above to deploy out an Azure App Service along with the additional files from this project. SonarQube may take up to 10 minutes to start the first time. This will deploy out a Basic (B1) App Service by default, configured with Java 21 and a 512 MB Elasticsearch heap, and have SQ use an in-memory database. B2 or higher is recommended for SonarQube 26.x; B1 may not have enough memory.
 
 ### SonarQube 26.x startup troubleshooting
 If the App Service URL shows "The specified CGI application encountered an error and the server terminated the process.", check the `httpplatform-stdout` logs in Kudu. For existing deployments, verify these settings in the Azure portal:
