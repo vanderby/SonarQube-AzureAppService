@@ -112,3 +112,10 @@ Some alternative hosting methods are below with the relevant links.
 **IIS as a Reverse Proxy**  
 <https://blogs.msdn.microsoft.com/visualstudioalmrangers/2016/06/04/running-sonarqube-behind-an-iis-reversed-proxy/>  
 <https://jessehouwing.net/sonarqube-configure-ssl-on-windows/>
+
+## Troubleshooting
+
+### `UnsupportedClassVersionError ... class file version 55.0 ... only recognizes class file versions up to 52.0`
+Newer SonarQube versions require Java 11 or later (the template deploys Java 17). This error means a Java 8 runtime is being used:
+* In the Azure web app, check **Configuration -> General settings -> Java version** and set it to Java 17 (or at least 11).
+* In your pipeline, make sure the agent running `SonarQubeAnalyze` uses JDK 11+ (e.g. with the `JavaToolInstaller` task or by setting `JAVA_HOME`).
