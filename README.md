@@ -38,6 +38,24 @@ If you wish to switch SQ to use an Azure SQL database deploy out the database wi
 | sonar.jdbc.username | SqlUserLogin |
 | sonar.jdbc.password | SqlUserLoginPassword |
 
+## Large analysis report uploads (HTTP 413)
+
+The supplied `wwwroot/web.config` allows request bodies up to 100 MiB (104857600 bytes), instead of the IIS default of 30000000 bytes (about 28.6 MiB). This limit includes the multipart upload overhead, not just the compressed analysis report.
+
+For an existing deployment, use the Kudu console to update `C:\home\site\wwwroot\web.config`. Merge the following into the existing `<system.webServer>` section, preserving the handler and startup configuration. If `security`, `requestFiltering`, or `requestLimits` already exists, update it rather than adding a duplicate:
+
+```xml
+<security>
+  <requestFiltering>
+    <requestLimits maxAllowedContentLength="104857600" />
+  </requestFiltering>
+</security>
+```
+
+Restart the App Service and retry the analysis. If the report needs a larger limit, increase `maxAllowedContentLength` (in bytes) only as needed; keeping a finite limit helps control resource usage. Changing `maxQueryString` as described in issue #53 does not increase the upload-body limit, and ASP.NET's `httpRuntime maxRequestLength` does not control this HttpPlatformHandler deployment.
+
+If HTTP 413 persists for a request below the configured limit, inspect the App Service IIS logs or failed-request tracing to identify the rejecting layer. IIS request filtering reports `413.1` for excessive content length; another proxy or gateway in front of the app may enforce its own limit. `uploadReadAheadSize` controls IIS buffering, not the request-filtering body limit, and should not be raised to a large value indiscriminately.
+
 ## Updating instructions
 
 1. Set application setting `SonarQubeOldVersion` to currently deployed version
