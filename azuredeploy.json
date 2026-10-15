@@ -100,7 +100,7 @@
             "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
           ],
           "properties": {
-            "alwaysOn": false,
+            "alwaysOn": true,
             "javaVersion": "17",
             "javaContainer": "TOMCAT",
             "javaContainerVersion": "9.0"

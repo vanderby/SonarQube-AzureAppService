@@ -14,6 +14,8 @@ This project uses the embedded database. It is recommended for production to mov
 ## Getting Started
 Use the ***Deploy to Azure*** button above to deploy out an Azure App Service along with the additional files from this project. SonarQube may take up to 10 minutes to start the first time. This will deploy out a Basic (B1) App Service and have SQ use an in-memory database.
 
+The deployment enables App Service **Always On** to prevent the app from being unloaded after periods of inactivity, which can cause slow cold starts and gateway timeouts. Always On requires a Basic (B1) or higher App Service plan.
+
 ## Passthrough Application Settings
 You can set SonarQube sonar.properties settings based on the Azure application settings. Anything prefixed with sonar.* will at runtime be set in sonar.properties file if it matches a property there. This enables settings to be defined in the ARM template and set at runtime.
 
