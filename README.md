@@ -12,7 +12,16 @@ This project uses the embedded database. It is recommended for production to mov
 [Deploy to Azure China Cloud](https://portal.azure.cn/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fvanderby%2FSonarQube-AzureAppService%2Fmaster%2Fazuredeploy.json)
 
 ## Getting Started
-Use the ***Deploy to Azure*** button above to deploy out an Azure App Service along with the additional files from this project. SonarQube may take up to 10 minutes to start the first time. This will deploy out a Basic (B1) App Service and have SQ use an in-memory database.
+Use the ***Deploy to Azure*** button above to deploy out an Azure App Service along with the additional files from this project. SonarQube may take up to 10 minutes to start the first time. This will deploy out a Basic (B2) App Service by default, configured with Java 21 and a 512 MB Elasticsearch heap, and have SQ use an in-memory database. B2 or higher is recommended for SonarQube 26.x; B1 may not have enough memory.
+
+### SonarQube 26.x startup troubleshooting
+If the App Service URL shows "The specified CGI application encountered an error and the server terminated the process.", check the `httpplatform-stdout` logs in Kudu. For existing deployments, verify these settings in the Azure portal:
+
+1. **Configuration → Stack settings**: set the Java version to **Java 21**. SonarQube 26.x requires Java 21; Java 17 can cause an `UnsupportedClassVersionError`.
+2. **Environment variables → App settings**: set `sonar.search.javaOpts` to `-Xms512m -Xmx512m`. Automatic Elasticsearch heap sizing can be as low as 64 MB on small plans, preventing Elasticsearch from initializing. The template sets this app setting for new deployments.
+   - Do **not** add `-XX:+UseSerialGC` or any other garbage collector flag. Elasticsearch's bundled configuration already selects a collector; adding another causes a "Multiple garbage collectors selected" JVM startup failure.
+3. Scale the App Service Plan to **B2 or higher** for memory headroom.
+4. **Stop**, then **Start** the Web App (not just **Restart**) to clear stuck processes. Allow a few minutes for SonarQube to start.
 
 ## Passthrough Application Settings
 You can set SonarQube sonar.properties settings based on the Azure application settings. Anything prefixed with sonar.* will at runtime be set in sonar.properties file if it matches a property there. This enables settings to be defined in the ARM template and set at runtime.

@@ -16,7 +16,7 @@
       "defaultValue": "SonarQubeAppService"
     },
     "skuName": {
-      "defaultValue": "B1",
+      "defaultValue": "B2",
       "allowedValues": [
         "B1",
         "B2",
@@ -101,7 +101,7 @@
           ],
           "properties": {
             "alwaysOn": false,
-            "javaVersion": "17",
+            "javaVersion": "21",
             "javaContainer": "TOMCAT",
             "javaContainerVersion": "9.0"
           }
@@ -116,7 +116,8 @@
           "properties": {
             "Deployment_Telemetry_Instrumentation_Key": "[variables('deploymentTelemetryKey')]",
             "SonarQubeEdition": "[parameters('SonarQube Edition')]",
-            "SonarQubeVersion": "[parameters('SonarQube Version')]"
+            "SonarQubeVersion": "[parameters('SonarQube Version')]",
+            "sonar.search.javaOpts": "-Xms512m -Xmx512m"
           }
         },
         {
