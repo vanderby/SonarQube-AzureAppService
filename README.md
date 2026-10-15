@@ -40,11 +40,33 @@ If you wish to switch SQ to use an Azure SQL database deploy out the database wi
 
 ## Updating instructions
 
-1. Set application setting `SonarQubeOldVersion` to currently deployed version
-1. Set application setting `SonarQubeVersion` to new version to be deployed
-1. Stop web app
-1. Download new zip archive by executing following scripts at Kudu (in most cases it is https://YOUR-WEB-APP-NAME.scm.azurewebsites.net/DebugConsole/?shell=powershell): 
-```
+These instructions apply to the Windows App Service installation deployed by this repository, not a Linux container. Changing the application settings alone does **not** download or install a new version.
+
+Before starting, check SonarSource's [upgrade guide](https://docs.sonarsource.com/sonarqube-server/server-upgrade-and-maintenance/upgrade/upgrade-the-server/) for the supported upgrade path, database requirements, and plugin compatibility. Back up the database and App Service files before making changes. For an upgrade from 9.5 to 9.9, Java 17 is required; ensure the App Service's Java runtime is set to Java 17. Also ensure the deployed `HttpPlatformHandlerStartup.ps1` includes this repository's support for SonarQube 9.6 and later (`SONAR_JAVA_PATH`).
+
+### 1. Save the application settings
+
+In the Azure portal, open your existing **App Service → Configuration → Application settings** (or **Settings → Environment variables**, depending on the portal layout). Add or update these settings and save/apply the changes. For example, when upgrading Community Edition from 9.5 to 9.9:
+
+| Name | Value |
+| ---- | ----- |
+| SonarQubeEdition | Community |
+| SonarQubeOldVersion | 9.5.0.56709 |
+| SonarQubeVersion | 9.9.0.65466 |
+
+Use the full version numbers matching your installed and target distributions. Keep your existing `sonar.jdbc.*` settings so the new installation connects to the same database.
+
+### 2. Stop SonarQube and open Kudu PowerShell
+
+In the App Service **Overview**, select **Stop** and wait for the app to stop. Then open **Development Tools → Advanced Tools → Go** to launch Kudu, and select **Debug console → PowerShell**. You can also open `https://YOUR-WEB-APP-NAME.scm.azurewebsites.net/DebugConsole/?shell=powershell` directly, replacing `YOUR-WEB-APP-NAME` with your App Service name. Kudu is separate from the stopped web app and remains available.
+
+Run the commands below in the **PowerShell command input at the bottom of the Kudu page**, not in Azure Cloud Shell, a local PowerShell window, or the App Service application-settings editor. For the short commands, paste one line at a time and press **Enter**. For the multiline download script, use the file-upload method in the next step.
+
+### 3. Download and extract the new version
+
+On your computer, copy the following block (without the Markdown backticks) into a text editor and save it as `Upgrade-SonarQube.ps1`, not `.ps1.txt`. In Kudu's file browser above the console, navigate to `site` → `wwwroot` and drag the saved file into the file listing to upload it. The script will run on the App Service, not on your computer.
+
+```powershell
     $Edition = $Env:SonarQubeEdition
     $Version = $Env:SonarQubeVersion
     $OldVersion = $Env:SonarQubeOldVersion
@@ -84,17 +106,44 @@ If you wish to switch SQ to use an Azure SQL database deploy out the database wi
     Invoke-WebRequest -Uri $downloadUri -OutFile $outputFile -UseBasicParsing
     Expand-Archive -Path $outputFile -DestinationPath $wwwrootPath -Force
 ```
-1. Copy plugins from old installation to new one
+Execute the uploaded script by entering this command in Kudu PowerShell:
+
+```powershell
+& "$env:HOME\site\wwwroot\Upgrade-SonarQube.ps1"
 ```
+
+It uses the saved application settings and absolute paths, so the console's current directory does not matter. Wait for it to finish without errors, then confirm that the new `sonarqube-<version>` folder exists under `$env:HOME\site\wwwroot`. If the environment variables still show the old settings, reopen Kudu after saving the settings before running the script again. Delete the uploaded `Upgrade-SonarQube.ps1` file through Kudu's file browser after use.
+
+### 4. Install compatible plugins
+
+Only copy plugins that support the target SonarQube version. Download compatible replacements for any incompatible plugins rather than copying them. If there are no custom plugins, skip this step. For compatible plugins, run in the same Kudu PowerShell console:
+
+```powershell
 $oldVersion = $env:SonarQubeOldVersion; 
 $newVersion = $env:SonarQubeVersion; 
-cp C:\home\site\wwwroot\sonarqube-$oldVersion\extensions\plugins\*.jar C:\home\site\wwwroot\sonarqube-$newVersion\extensions\plugins\ -Force;
+Copy-Item "$env:HOME\site\wwwroot\sonarqube-$oldVersion\extensions\plugins\*.jar" "$env:HOME\site\wwwroot\sonarqube-$newVersion\extensions\plugins\" -Force
 ```
-1. Remove old sonarqube folder (`$oldVersion = $env:SonarQubeOldVersion; rm C:\home\site\wwwroot\sonarqube-$oldVersion\ -Force`)
-1. Start web app
 
-In case something goes wrong - you could always restore from backup.
-For additional safety - create staging slot with copy of current application before proceeding with actions. If you are using other than Community edition - than your key is calculated basing on database connection string - so, you could not use another database for updating :(
+### 5. Move the old installation out of wwwroot
+
+The startup script searches recursively for SonarQube configuration and startup files. Do not leave both installations in `wwwroot`, even with the old folder renamed. Keep the old installation outside that directory as a backup:
+
+```powershell
+$oldVersion = $env:SonarQubeOldVersion
+$backupPath = "$env:HOME\site\sonarqube-backups"
+New-Item -ItemType Directory -Path $backupPath -Force
+Move-Item -Path "$env:HOME\site\wwwroot\sonarqube-$oldVersion" -Destination $backupPath
+```
+
+Do not continue if any command fails. Verify that only the new SonarQube installation remains in `wwwroot`, alongside this repository's `web.config` and `HttpPlatformHandlerStartup.ps1`.
+
+### 6. Start the app and complete the database upgrade
+
+Return to the Azure portal and select **Start** in the App Service **Overview**. Allow several minutes for startup, then browse to `https://YOUR-WEB-APP-NAME.azurewebsites.net/setup` (or your custom hostname followed by `/setup`). Follow the SonarQube prompts to upgrade the database if requested. After completion, open the normal SonarQube URL, sign in, and verify the version, projects, and plugins.
+
+If startup fails, inspect the new installation's `logs` folder through Kudu. To roll back after a database migration, stop the app and restore **both** the database backup and the matching old installation; simply changing `SonarQubeVersion` back does not roll back the database or select the old binaries.
+
+For additional safety, rehearse the upgrade in a staging slot with a separate copy of the database. Do not let a staging slot upgrade the live production database. Check SonarSource's licensing requirements when testing a commercial edition against a copied database.
 
 ## Alternative Hosting Methods
 Some alternative hosting methods are below with the relevant links.
