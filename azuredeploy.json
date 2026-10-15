@@ -116,8 +116,7 @@
           "properties": {
             "Deployment_Telemetry_Instrumentation_Key": "[variables('deploymentTelemetryKey')]",
             "SonarQubeEdition": "[parameters('SonarQube Edition')]",
-            "SonarQubeVersion": "[parameters('SonarQube Version')]",
-            "sonar.search.javaOpts": "-Xms512m -Xmx512m"
+            "SonarQubeVersion": "[parameters('SonarQube Version')]"
           }
         },
         {
