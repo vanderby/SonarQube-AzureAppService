@@ -62,9 +62,6 @@
       }
     }
   },
-  "variables": {
-    "deploymentTelemetryKey": "e15aa4db-a1cc-4622-844f-e7dd01596983"
-  },
   "resources": [
     {
       "apiVersion": "2016-09-01",
@@ -114,7 +111,6 @@
             "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
           ],
           "properties": {
-            "Deployment_Telemetry_Instrumentation_Key": "[variables('deploymentTelemetryKey')]",
             "SonarQubeEdition": "[parameters('SonarQube Edition')]",
             "SonarQubeVersion": "[parameters('SonarQube Version')]"
           }
