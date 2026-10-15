@@ -40,9 +40,14 @@ If you wish to switch SQ to use an Azure SQL database deploy out the database wi
 
 ## Updating instructions
 
+Before upgrading, check SonarSource's supported upgrade path (including any required intermediate releases), database compatibility, plugin compatibility, and Java requirements for the target version. Downloading a new archive does not upgrade the App Service Java runtime; ensure `JAVA_HOME` points to a supported Java installation.
+
+Back up both the database and the existing `wwwroot` before proceeding. Do not run production and a staging slot against the same database during an upgrade. A slot alone is not a database backup.
+
 1. Set application setting `SonarQubeOldVersion` to currently deployed version
-1. Set application setting `SonarQubeVersion` to new version to be deployed
+1. Set application setting `SonarQubeVersion` to the exact new version to be deployed (not `Latest`), and verify `SonarQubeEdition` is unchanged (e.g. `Developer`)
 1. Stop web app
+1. Update `wwwroot\HttpPlatformHandlerStartup.ps1` with the current script from this repository
 1. Download new zip archive by executing following scripts at Kudu (in most cases it is https://YOUR-WEB-APP-NAME.scm.azurewebsites.net/DebugConsole/?shell=powershell): 
 ```
     $Edition = $Env:SonarQubeEdition
@@ -84,17 +89,18 @@ If you wish to switch SQ to use an Azure SQL database deploy out the database wi
     Invoke-WebRequest -Uri $downloadUri -OutFile $outputFile -UseBasicParsing
     Expand-Archive -Path $outputFile -DestinationPath $wwwrootPath -Force
 ```
-1. Copy plugins from old installation to new one
+1. Install target-compatible versions of any third-party plugins in the new installation's `extensions\plugins` directory. Do not blindly copy all old JARs or overwrite bundled plugins. Use the actual extracted directory names: commercial archive names can differ from the directory names inside them.
 ```
-$oldVersion = $env:SonarQubeOldVersion; 
-$newVersion = $env:SonarQubeVersion; 
-cp C:\home\site\wwwroot\sonarqube-$oldVersion\extensions\plugins\*.jar C:\home\site\wwwroot\sonarqube-$newVersion\extensions\plugins\ -Force;
+Get-ChildItem "$env:Home\site\wwwroot" -Directory -Filter 'sonarqube-*'
 ```
-1. Remove old sonarqube folder (`$oldVersion = $env:SonarQubeOldVersion; rm C:\home\site\wwwroot\sonarqube-$oldVersion\ -Force`)
+1. Move the old installation outside `wwwroot` to retain it for recovery. Startup selects the exact `SonarQubeVersion`; if that setting is blank or `Latest`, only one installation may remain in `wwwroot`.
+1. Keep database connection settings in App Service configuration (`sonar.jdbc.url`, `sonar.jdbc.username`, `sonar.jdbc.password`). Do not copy the old `sonar.properties`: startup resets it and applies matching `sonar.*` application settings.
 1. Start web app
+1. Browse to `https://YOUR-WEB-APP-NAME.azurewebsites.net/setup` and complete the database migration if requested. Wait for migration and startup to finish before sending normal traffic.
 
-In case something goes wrong - you could always restore from backup.
-For additional safety - create staging slot with copy of current application before proceeding with actions. If you are using other than Community edition - than your key is calculated basing on database connection string - so, you could not use another database for updating :(
+If the site reports “The specified CGI application encountered an error”, inspect the HttpPlatformHandler stdout logs in Kudu and the selected installation's `logs\sonar.log`, `logs\web.log`, and `logs\es.log`. The CGI message alone does not identify the cause; check these logs for unsupported Java, incompatible plugins, database connectivity, or a pending migration. Include the old/new SonarQube versions, Java version, and relevant log errors when requesting help, but redact credentials and connection secrets.
+
+If recovery is necessary after a database migration, restore the matching database backup as well as the old installation; do not start an older SonarQube against an upgraded database. A separate staging database may require a separate commercial license; confirm licensing before testing.
 
 ## Alternative Hosting Methods
 Some alternative hosting methods are below with the relevant links.

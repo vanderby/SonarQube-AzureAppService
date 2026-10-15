@@ -69,11 +69,16 @@ function Set-Property-Value {
 TrackEvent -InstrumentationKey $ApplicationInsightsApiKey -EventName 'Starting HttpPlatformHandler Script'
 
 log('Searching for sonar.properties file')
-$propFile = Get-ChildItem 'sonar.properties' -Recurse
-if (!$propFile) {
-    log('Could not find sonar.properties')
-    exit
+$propFiles = @(Get-ChildItem -Path $PSScriptRoot -Filter 'sonar.properties' -Recurse)
+if ($Env:SonarQubeVersion -and $Env:SonarQubeVersion -ine 'Latest') {
+    $installationPattern = '^sonarqube-(?:(?:developer|enterprise|datacenter)-)?' + [regex]::Escape($Env:SonarQubeVersion) + '$'
+    $propFiles = @($propFiles | Where-Object { $_.Directory.Parent.Name -match $installationPattern })
 }
+if ($propFiles.Count -ne 1) {
+    throw "Expected one sonar.properties file for SonarQubeVersion '$Env:SonarQubeVersion', found $($propFiles.Count). Set SonarQubeVersion to the exact extracted version and keep only one matching installation in wwwroot."
+}
+$propFile = $propFiles[0]
+$sonarQubePath = $propFile.Directory.Parent.FullName
 log("File found at: $($propFile.FullName)")
 $configContents = Get-Content -Path $propFile.FullName -Raw
 
@@ -96,7 +101,7 @@ $configContents = $configContents -ireplace '(?m)^#?sonar\.web\.port=.*', "sonar
 log('Saving updated sonar.properties contents')
 $configContents.Trim() | Out-String | Set-Content -Path $propFile.FullName -NoNewLine
 
-$sqver = $propFile.FullName.split("\")[4].split("-")[1]
+$sqver = $propFile.Directory.Parent.Name -replace '^sonarqube-(?:(?:developer|enterprise|datacenter)-)?', ''
 log("SQ version: $sqver")
 if ([version]$sqver -ge [version]9.6) {
     log("SQ ver >= 9.6, use env var not wrapper.conf")
@@ -106,7 +111,7 @@ if ([version]$sqver -ge [version]9.6) {
 else {
     log('SQ ver < 9.6, use wrapper.conf')
     log('Searching for wrapper.conf file')
-    $wrapperConfig = Get-ChildItem 'wrapper.conf' -Recurse
+    $wrapperConfig = Get-ChildItem -Path $sonarQubePath -Filter 'wrapper.conf' -Recurse
     if (!$wrapperConfig) {
         log("Could not find wrapper.conf")
         exit
@@ -120,7 +125,7 @@ else {
 }
 
 log('Searching for duplicate plugins.')
-$plugins = Get-ChildItem '.\sonarqube-*\extensions\plugins\*' -Filter '*.jar'
+$plugins = Get-ChildItem -Path "$sonarQubePath\extensions\plugins\*" -Filter '*.jar'
 $pluginBaseName = $plugins | ForEach-Object { $_.Name.substring(0, $_.Name.LastIndexOf('-')) }
 $uniquePlugins = $pluginBaseName | Select-Object -Unique
 if ($uniquePlugins) {
@@ -136,7 +141,7 @@ if ($uniquePlugins) {
 }
 
 log('Searching for StartSonar.bat')
-$startScript = Get-ChildItem 'StartSonar.bat' -Recurse
+$startScript = Get-ChildItem -Path $sonarQubePath -Filter 'StartSonar.bat' -Recurse
 if (!$startScript) {
     log('Could not find StartSonar.bat')
     exit
