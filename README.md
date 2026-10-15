@@ -30,13 +30,45 @@ The runtime execution is made possible by the [HttpPlatformHandler](https://docs
 After installation, web app would be provided with logs cleanup web job, which would be removing all the logs older than 1 day (or value, specified in `LogsToKeep` app settings variable)
 
 ## Azure SQL
-If you wish to switch SQ to use an Azure SQL database deploy out the database with a case-sensative collation (e.g.  SQL_Latin1_General_CP1_CS_AS) and update the Web App app settings with entries similar to: 
+The ARM template does not create a SQL database. To use Azure SQL, create a database with case-sensitive, accent-sensitive **data and catalog collations** before starting SonarQube. Setting only the database collation is not enough: Azure SQL defaults the catalog collation to `SQL_Latin1_General_CP1_CI_AS`, even when the data collation is `SQL_Latin1_General_CP1_CS_AS`. This mismatch can cause SonarQube 25.x installation or upgrade migrations (for example, `Create index on 'rule_tags' table`) to fail with a collation conflict in a `UNION ALL` / `ORDER BY` metadata query.
+
+### New databases
+Connect to the Azure SQL logical server's `master` database with an account permitted to create databases and run the following, replacing `SonarQube` with your database name:
+
+```sql
+CREATE DATABASE [SonarQube]
+COLLATE SQL_Latin1_General_CP1_CS_AS
+WITH CATALOG_COLLATION = DATABASE_DEFAULT;
+```
+
+`CATALOG_COLLATION = DATABASE_DEFAULT` makes the database's system catalog use the same collation as its data. It does not change the logical server or `master` collation. See Microsoft's [CREATE DATABASE documentation](https://learn.microsoft.com/en-us/sql/t-sql/statements/create-database-transact-sql?view=azuresqldb-current) and [Azure SQL collation guidance](https://learn.microsoft.com/en-us/sql/relational-databases/collations/collation-and-unicode-support?view=azuresqldb-current#collation-in-azure-sql-database).
+
+While connected to `master`, verify the database settings before configuring SonarQube:
+
+```sql
+SELECT name, collation_name, catalog_collation_type_desc
+FROM sys.databases
+WHERE name = N'SonarQube';
+```
+
+Expect `collation_name` to be `SQL_Latin1_General_CP1_CS_AS` and `catalog_collation_type_desc` to be `DATABASE_DEFAULT`.
+
+Then update the Web App app settings with entries similar to:
 
 | Name | Value |
 | ---- | ----- |
 | sonar.jdbc.url | jdbc:sqlserver://AzureSQLDatabaseServer.database.windows.net:1433;database=DatabaseName;encrypt=true; |
 | sonar.jdbc.username | SqlUserLogin |
 | sonar.jdbc.password | SqlUserLoginPassword |
+
+### Existing databases and failed upgrades
+If migration reports a conflict between `SQL_Latin1_General_CP1_CI_AS` and `SQL_Latin1_General_CP1_CS_AS`, check both settings using the query above with your database name. Azure SQL's catalog collation cannot be changed after database creation; changing the JDBC URL or a SonarQube property cannot fix it. Do not switch the data collation to `CI_AS`, since SonarQube requires case-sensitive data.
+
+- For a fresh installation with no data to retain, create a new database with the settings above and point `sonar.jdbc.url` at it.
+- For an existing installation, stop SonarQube and take a verified backup before attempting recovery or another upgrade. Preserve the original database. Plan and test a migration to a newly created database with matching collations, preserving SonarQube's schema and data, and verify the target collations before resuming the upgrade. Do not assume a restore or import will change the catalog collation.
+- If database migration is not feasible, seek SonarSource guidance for your exact SonarQube/JDBC driver version. PostgreSQL or a self-managed SQL Server with suitable collations are alternative deployment targets, but moving existing SonarQube data requires a supported migration procedure.
+
+This repository deploys SonarQube binaries; it does not implement SonarQube's database metadata queries. Any query-level fix must be made upstream in SonarQube or its SQL Server JDBC driver.
 
 ## Updating instructions
 
