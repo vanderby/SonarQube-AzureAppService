@@ -19,6 +19,11 @@ You can set SonarQube sonar.properties settings based on the Azure application s
 
 > Note: All entries in the sonar.properties file are commented out by the [HttpPlatformHandlerStartup](wwwroot/HttpPlatformHandlerStartup.ps1) script on startup. To change the Sonar properties add the application settings entry in the configuration blade (e.g. Name = sonar.jdbc.password; Value = XXXXX).
 
+### Elasticsearch port conflicts
+The deployment template sets `sonar.search.port` to `0` so SonarQube selects an available port for Elasticsearch instead of the default `9001`. This avoids port conflicts when multiple instances or deployment slots share a worker.
+
+For an existing App Service reporting `java.net.SocketException: Permission denied` when checking Elasticsearch status on `127.0.0.1:9001`, add or update the application setting `sonar.search.port` to `0`, then restart the App Service. This local Elasticsearch connection is separate from the SQL database connection.
+
 ## In-Depth Details
 After the ARM template is deployed a deployment script is executed to copy the wwwroot folder from the repository folder to the App Service wwwroot folder. It also finds the most recent release of SonarQube to download and extract into the App Service wwwroot folder.
 
