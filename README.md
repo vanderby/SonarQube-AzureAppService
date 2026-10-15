@@ -48,14 +48,6 @@ If you wish to switch SQ to use an Azure SQL database deploy out the database wi
     $Edition = $Env:SonarQubeEdition
     $Version = $Env:SonarQubeVersion
     $OldVersion = $Env:SonarQubeOldVersion
-    if(!$Version -or ($Version -ieq 'Latest')) {
-        # binaries.sonarsource.com moved to S3 and is not easily searchable anymore. Getting the latest version from GitHub releases.
-        $releasesFromApi = (Invoke-WebRequest -Uri 'https://api.github.com/repos/SonarSource/sonarqube/releases' -UseBasicParsing).Content
-        $releasesPS = $releasesFromApi | ConvertFrom-Json
-        $Version = $releasesPS.Name | Sort-Object -Descending | Select-Object -First 1
-        Write-Output "Found the latest release to be $Version"
-    }
-
     if(!$Edition) {
         $Edition = 'Community'
     }
@@ -75,6 +67,24 @@ If you wish to switch SQ to use an Azure SQL database deploy out the database wi
             $downloadFolder = 'CommercialDistribution/sonarqube-datacenter'
             $fileNamePrefix = 'sonarqube-datacenter'
         }
+    }
+
+    if(!$Version -or ($Version -ieq 'Latest')) {
+        if ($fileNamePrefix -eq 'sonarqube') {
+            $releasesFromApi = (Invoke-WebRequest -Uri 'https://api.github.com/repos/SonarSource/sonarqube/releases' -UseBasicParsing).Content
+            $releasesPS = $releasesFromApi | ConvertFrom-Json
+            $Version = $releasesPS.Name | ForEach-Object { if ($_) { [version]$_ } } | Sort-Object -Descending | Select-Object -First 1
+        }
+        else {
+            # The update center lists full download versions separately for each commercial edition.
+            $releaseMetadata = (Invoke-WebRequest -Uri 'https://downloads.sonarsource.com/sonarqube/update/update-center.properties' -UseBasicParsing).Content -replace '\\:', ':'
+            $versionPattern = [regex]::Escape("https://binaries.sonarsource.com/$downloadFolder/$fileNamePrefix-") + '(\d+\.\d+\.\d+\.\d+)\.zip'
+            $Version = [regex]::Matches($releaseMetadata, $versionPattern) | ForEach-Object { [version]$_.Groups[1].Value } | Sort-Object -Descending | Select-Object -First 1
+        }
+        if (!$Version) {
+            throw "Could not find the latest release for $Edition."
+        }
+        Write-Output "Found the latest release to be $Version"
     }
 
     $fileName = "$fileNamePrefix-$Version.zip"
